@@ -1,0 +1,639 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>凸透镜成像规律 · 交互演示</title>
+<style>
+:root{--bg:#f4f6fb;--card:#fff;--ink:#1f2937;--sub:#6b7280;--obj:#0f766e;--rayA:#2563eb;--rayB:#7c3aed;--ext:#94a3b8;--img:#dc2626}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;background:var(--bg);color:var(--ink)}
+header{padding:12px 20px;background:#0f172a;color:#fff}
+header h1{margin:0;font-size:18px;font-weight:600}
+header p{margin:4px 0 0;font-size:12px;color:#cbd5e1}
+.wrap{display:flex;gap:14px;padding:14px;flex-wrap:wrap;align-items:flex-start}
+.stage{flex:1 1 640px;min-width:320px;background:var(--card);border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.08);padding:10px}
+canvas{display:block;width:100%;border-radius:8px;background:#fff;touch-action:none}
+.hint{font-size:12px;color:var(--sub);margin-top:6px;line-height:1.7}
+.panel{flex:1 1 320px;min-width:290px;max-width:400px;display:flex;flex-direction:column;gap:12px}
+.card{background:var(--card);border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.08);padding:12px 14px}
+.card h3{margin:0 0 8px;font-size:14px}
+.row{display:flex;align-items:center;gap:8px;margin:8px 0}
+.row label{font-size:13px;color:var(--sub)}
+.row label.sl{min-width:66px}
+input[type=range]{flex:1}
+input[type=number]{width:78px;padding:4px 6px;border:1px solid #d1d5db;border-radius:6px;font-size:13px}
+input[type=checkbox]{margin-right:4px}
+.btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+button{border:1px solid #cbd5e1;background:#fff;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer}
+button:hover{background:#eef2ff;border-color:#818cf8}
+button.on{background:#2563eb;color:#fff;border-color:#2563eb}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-size:13px}
+.kv b{color:var(--sub);font-weight:500}
+.nature{margin-top:10px;padding:8px 10px;border-radius:8px;background:#fef2f2;color:#b91c1c;font-size:13px;font-weight:600}
+.note{margin-top:8px;padding:8px 10px;border-radius:8px;background:#eff6ff;color:#1d4ed8;font-size:12px;line-height:1.6}
+.ghost{margin-top:8px;padding:8px 10px;border-radius:8px;background:#fff7ed;color:#b45309;font-size:12px;line-height:1.6;display:none}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th,td{border:1px solid #e5e7eb;padding:5px 4px;text-align:center}
+th{background:#f1f5f9}
+tr.cur{background:#fef9c3;font-weight:700}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--sub);margin-top:8px}
+.legend i{display:inline-block;width:24px;height:0;border-top:2px solid;margin-right:4px;vertical-align:middle}
+.raybtns{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.raybtn{font-size:12px;padding:4px 8px;border-radius:12px;border:1px solid #cbd5e1;background:#fff;cursor:pointer}
+.raybtn.on{background:#2563eb;color:#fff;border-color:#2563eb}
+.raybtn.off{background:#f3f4f6;color:#9ca3af;border-color:#d1d5db;text-decoration:line-through}
+</style>
+</head>
+<body>
+<header>
+  <h1>凸透镜成像规律 · 交互演示</h1>
+  <p>固定比例尺 · 光线无折转 · 物距可拉到 50f 观察像紧贴焦点 · 透镜左右/上下独立移动（物体不动）· A&#8242;B&#8242; 随 B 一起离轴 · 移动前后像对比</p>
+</header>
+
+<div class="wrap">
+  <div class="stage">
+    <canvas id="cv"></canvas>
+    <div class="hint">
+      操作：① <b>拖动物体AB</b> 沿主光轴平移（物体移出画面后在左边缘以虚线表示，入射光仍按真实方向射入，过光心的光线斜率按真实物距计算）；② 滑块/数字框/快捷按钮/键盘 <b>&#8592;&#8594;</b> 移动物体，<b>&#8593;&#8595;</b> 调焦距；③ "自动演示"让物体由近及远往复。<br>
+      说明：<b>画面比例尺只随焦距改变，移动物体不会缩放画面</b>，物距上限 50f；u 越大 &#916;=f&#178;/(u&#8722;f) 越小，像越贴近 F&#8242; 但始终在其外侧（右上角放大窗显示 &#916;）。<br>
+      透镜移动已拆为两个独立开关：<b>可左右平移</b>（<b>物体 AB 位置保持不变</b>，只改变物距 u；向左可一直平移，直到与物体相距 f 为止）、<b>可上下平移</b>（物体同样不动，B 自动离轴，像 A&#8242;B&#8242; 整体跟着离轴）；两者范围都有限。勾选<b>移动前后像对比</b>后，开始拖动透镜时会自动记录此刻状态，用<b>橙色虚线像 + 灰色虚线透镜/主轴</b>显示原位置与原像，可随时清除。点击下方按钮可隐藏/恢复各条光线。
+    </div>
+    <div class="raybtns" id="rayBtns"></div>
+  </div>
+
+  <div class="panel">
+    <div class="card">
+      <h3>参数控制</h3>
+      <div class="row"><label class="sl">焦距 f (cm)</label><input type="range" id="fRange" min="5" max="25" step="0.5" value="10"><input type="number" id="fNum" min="5" max="25" step="0.5" value="10"></div>
+      <div class="row"><label class="sl">物距 u (cm)</label><input type="range" id="uRange" min="0.5" max="500" step="0.1" value="25"><input type="number" id="uNum" min="0.1" step="0.1" value="25"></div>
+      <div class="row"><label class="sl">物高 h (cm)</label><input type="range" id="hRange" min="2" max="8" step="0.5" value="5"><span id="hVal" style="font-size:12px;color:#6b7280">5.0</span></div>
+      <div class="row"><label><input type="checkbox" id="chkFree"> 物体可上下移动</label></div>
+      <div class="row"><label><input type="checkbox" id="chkLensX"> 透镜可左右平移（物体不动，改变物距）</label></div>
+      <div class="row"><label><input type="checkbox" id="chkLensY"> 透镜可上下平移（物体与主光轴分离）</label></div>
+      <div class="row"><label><input type="checkbox" id="chkGhost"> 移动前后像对比</label><button id="btnGhostNow" style="margin-left:auto">记录当前状态</button></div>
+      <div class="btns">
+        <button id="btnNear">&#9664; 靠近</button>
+        <button id="btnFar">远离 &#9654;</button>
+        <button id="btnAnim">自动演示</button>
+        <button id="btnClearGhost">清除对比</button>
+        <button id="btnReset">重置</button>
+      </div>
+      <div class="btns">
+        <button data-k="0.6">0.6f</button>
+        <button data-k="1">f</button>
+        <button data-k="1.2">1.2f</button>
+        <button data-k="1.5">1.5f</button>
+        <button data-k="2">2f</button>
+        <button data-k="3">3f</button>
+        <button data-k="5">5f</button>
+        <button data-k="8">8f</button>
+        <button data-k="10">10f</button>
+        <button data-k="20">20f</button>
+        <button data-k="30">30f</button>
+        <button data-k="50">50f</button>
+      </div>
+      <div class="btns">
+        <button id="btnGrid" class="on">网格</button>
+        <button id="btnMark" class="on">尺寸标注</button>
+        <button id="btnZoom" class="on">焦点放大窗</button>
+        <button id="btnF" class="on">F&#8242;参考线</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>实时数据</h3>
+      <div class="kv">
+        <b>物距 u</b><span id="oU">&#8212;</span>
+        <b>像距 v</b><span id="oV">&#8212;</span>
+        <b>v / f</b><span id="oR">&#8212;</span>
+        <b>&#916; = v &#8722; f</b><span id="oD">&#8212;</span>
+        <b>放大率 m</b><span id="oM">&#8212;</span>
+        <b>像高 h&#8242;</b><span id="oH">&#8212;</span>
+        <b>当前区间</b><span id="oCase">&#8212;</span>
+      </div>
+      <div class="nature" id="oNature">&#8212;</div>
+      <div class="note" id="oNote" style="display:none"></div>
+      <div class="ghost" id="oGhost"></div>
+    </div>
+
+    <div class="card">
+      <h3>成像规律（当前情形高亮）</h3>
+      <table>
+        <tr><th>物距</th><th>像的性质</th><th>像距</th><th>应用</th></tr>
+        <tr id="rA"><td>f &lt; u &lt; 2f</td><td>倒立、放大、实像</td><td>v &gt; 2f</td><td>投影仪</td></tr>
+        <tr id="rB"><td>u = 2f</td><td>倒立、等大、实像</td><td>v = 2f</td><td>测焦距</td></tr>
+        <tr id="rC"><td>u &gt; 2f</td><td>倒立、缩小、实像</td><td>f &lt; v &lt; 2f</td><td>照相机</td></tr>
+        <tr id="rF"><td>u 很大（&#8805;10f）</td><td>倒立、极小、实像</td><td>v &#8776; f，像在焦点附近</td><td>远景成像</td></tr>
+        <tr id="rD"><td>u = f</td><td>不成像（平行光）</td><td>&#8212;</td><td>探照灯</td></tr>
+        <tr id="rE"><td>u &lt; f</td><td>正立、放大、虚像</td><td>同侧</td><td>放大镜</td></tr>
+      </table>
+      <div class="legend">
+        <span><i style="border-color:#0f766e"></i>物体 AB</span>
+        <span><i style="border-color:#2563eb"></i>A光线(蓝)</span>
+        <span><i style="border-color:#7c3aed"></i>B光线(紫)</span>
+        <span><i style="border-color:#94a3b8;border-top-style:dashed"></i>反向延长线</span>
+        <span><i style="border-color:#dc2626"></i>实像 A&#8242;B&#8242;</span>
+        <span><i style="border-color:#d97706;border-top-style:dashed"></i>对比：原透镜位置与原像</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+var cv=document.getElementById('cv'),ctx=cv.getContext('2d');
+function $(id){return document.getElementById(id);}
+var fRange=$('fRange'),fNum=$('fNum'),uRange=$('uRange'),uNum=$('uNum'),hRange=$('hRange'),hVal=$('hVal');
+var chkFree=$('chkFree'),chkLensX=$('chkLensX'),chkLensY=$('chkLensY'),chkGhost=$('chkGhost');
+
+// 核心设计：比例尺只由焦距决定，移动物体不缩放画面
+var S={f:10,u:25,h:5,grid:true,mark:true,zoom:true,fguide:true,free:false,lensX:false,lensY:false,ghost:false};
+var K=3;                 // 可视半幅 = 3f
+var UMAX_K=50;           // 物距上限 50f（像几乎贴在 F' 上）
+var LENS_X_LIMIT=80;     // 透镜向右可平移像素范围（向左不受此限，可一直移到与物体相距 f）
+var LENS_Y_LIMIT=50;     // 透镜上下可平移像素范围（不广）
+var W,H,cx,cy,scale,uMin,uMax,dpr=1;
+var lensXOff=0,lensYOff=0,objYOff=0;
+var LX=0,LAXIS=0;
+var hiddenRays={};
+var ghost=null;
+function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+function Yo(y){return cy-y*scale;}          // 物体的 y：实验室坐标，不随透镜上下移
+function Yi2(y){return (cy+lensYOff*scale)-y*scale;} // 像的 y：以当前主光轴为基准
+var rayHits=[];
+
+function resize(){
+  var w=cv.parentElement.clientWidth-20;
+  W=Math.max(320,w);H=Math.round(clamp(W*0.52,360,560));
+  dpr=window.devicePixelRatio||1;
+  cv.width=W*dpr;cv.height=H*dpr;cv.style.height=H+'px';
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  cx=Math.round(W/2);cy=Math.round(H*0.56);
+  scale=Math.min(18,(W/2-56)/(K*S.f));
+  uMin=Math.max(0.3,0.05*S.f);uMax=UMAX_K*S.f;
+  S.u=clamp(S.u,uMin,uMax);
+  uRange.min=uMin.toFixed(2);uRange.max=uMax.toFixed(1);uRange.step=0.1;
+}
+
+/* ---------- 绘图工具 ---------- */
+function arrowHead(x,y,ang,size,color){
+  ctx.save();ctx.translate(x,y);ctx.rotate(ang);
+  ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(-size,-size*0.45);ctx.lineTo(-size,size*0.45);ctx.closePath();
+  ctx.fillStyle=color;ctx.fill();ctx.restore();
+}
+function ray(x1,y1,x2,y2,o){
+  o=o||{};var c=o.color||'#2563eb',w=o.width||2,dash=o.dash||null,mid=o.mid!==false,t=o.t||0.5;
+  ctx.save();ctx.strokeStyle=c;ctx.lineWidth=w;ctx.lineCap='round';
+  if(dash)ctx.setLineDash(dash);
+  ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();ctx.setLineDash([]);
+  if(mid&&Math.hypot(x2-x1,y2-y1)>18)
+    arrowHead(x1+(x2-x1)*t,y1+(y2-y1)*t,Math.atan2(y2-y1,x2-x1),o.head||9,c);
+  ctx.restore();
+}
+function dot(x,y,r,c){ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fillStyle=c;ctx.fill();}
+function txt(s,x,y,c,size,align){ctx.fillStyle=c||'#111';ctx.font=(size||12)+'px sans-serif';ctx.textAlign=align||'center';ctx.fillText(s,x,y);}
+// 物体在画面外时，把入射光起点裁到画布左边缘（保持真实斜率）
+function entry(ox,ay,tx,ty){
+  if(ox>=2) return [ox,ay];
+  if(Math.abs(tx-ox)<1e-6) return [2,ay];
+  var t=(2-ox)/(tx-ox);
+  return [2,ay+(ty-ay)*t];
+}
+
+/* ---------- 对比快照 ---------- */
+function capture(){
+  return {f:S.f,u:S.u,h:S.h,lensXOff:lensXOff,lensYOff:lensYOff,objYOff:objYOff};
+}
+function drawGhost(){
+  if(!S.ghost||!ghost) return;
+  var g=ghost,f=g.f,u=g.u,h=g.h;
+  var parallel=Math.abs(u-f)<1e-3;
+  var Lh=Math.min(H*0.34,140),bw=13;
+  var gx=cx+g.lensXOff, gxAxis=cy+g.lensYOff*scale;
+  ctx.save();
+  ctx.setLineDash([7,6]);ctx.strokeStyle='#94a3b8';ctx.lineWidth=1.8;
+  ctx.beginPath();ctx.moveTo(8,gxAxis);ctx.lineTo(W-8,gxAxis);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(gx,gxAxis-Lh);
+  ctx.quadraticCurveTo(gx+bw,gxAxis,gx,gxAxis+Lh);
+  ctx.quadraticCurveTo(gx-bw,gxAxis,gx,gxAxis-Lh);ctx.closePath();ctx.stroke();
+  [-f,f].forEach(function(p){var px=gx+p*scale;if(px>10&&px<W-10){ctx.beginPath();ctx.arc(px,gxAxis,3,0,7);ctx.stroke();}});
+  ctx.setLineDash([]);
+  txt('原透镜位置',gx,gxAxis-Lh-8,'#94a3b8',11);
+  if(!parallel){
+    var v=u*f/(u-f);
+    var ix=gx+v*scale;
+    var rA=h+g.objYOff+g.lensYOff,rB=g.objYOff+g.lensYOff;
+    var ay=gxAxis+(v/u)*rA*scale,by=gxAxis+(v/u)*rB*scale;
+    if(ix>6&&ix<W-6&&ay>-H*0.5&&ay<H*1.5&&by>-H*0.5&&by<H*1.5){
+      ctx.save();ctx.setLineDash([7,5]);ctx.strokeStyle='#d97706';ctx.lineWidth=2.6;
+      ctx.beginPath();ctx.moveTo(ix,by);ctx.lineTo(ix,ay);ctx.stroke();ctx.setLineDash([]);
+      arrowHead(ix,ay,Math.atan2(ay-by,0),10,'#d97706');
+      ctx.restore();
+      txt('原像 A'+String.fromCharCode(8242)+'B'+String.fromCharCode(8242)+'（u='+u.toFixed(1)+'cm，v='+v.toFixed(2)+'cm）',ix+6,Math.min(ay,by)-12,'#d97706',11,'left');
+    }else txt('原像在画面外（u='+u.toFixed(1)+'cm）',W/2,H-14,'#d97706',11);
+  }else txt('原位置：u = f，不成像',W/2,H-14,'#94a3b8',11);
+  ctx.restore();
+}
+
+/* ---------- 主绘制 ---------- */
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  var f=S.f,u=S.u,h=S.h;
+  var parallel=Math.abs(u-f)<1e-3;
+  var v=parallel?Infinity:u*f/(u-f);
+  // 物点相对当前主光轴的高度：透镜上下平移后物体自动离轴，像也随之整体离轴
+  var relA=h+objYOff+lensYOff,relB=objYOff+lensYOff;
+  var yA2=parallel?null:-(v/u)*relA,yB2=parallel?null:-(v/u)*relB;
+
+  LX=cx+lensXOff;
+  LAXIS=cy+lensYOff*scale;
+
+  if(S.grid){
+    ctx.save();ctx.strokeStyle='#eef1f6';ctx.lineWidth=1;
+    for(var x=cx%scale;x<W;x+=scale){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+    for(var y=cy%scale;y<H;y+=scale){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+    ctx.restore();
+  }
+
+  // 主光轴
+  ctx.save();ctx.strokeStyle='#334155';ctx.lineWidth=1.6;ctx.setLineDash([18,6,2,6]);
+  ctx.beginPath();ctx.moveTo(8,LAXIS);ctx.lineTo(W-8,LAXIS);ctx.stroke();ctx.setLineDash([]);ctx.restore();
+  txt('主光轴',26,LAXIS-8,'#64748b',11,'left');
+
+  // 凸透镜
+  var Lh=Math.min(H*0.34,140),bw=13;
+  ctx.save();
+  ctx.beginPath();ctx.moveTo(LX,LAXIS-Lh);
+  ctx.quadraticCurveTo(LX+bw,LAXIS,LX,LAXIS+Lh);
+  ctx.quadraticCurveTo(LX-bw,LAXIS,LX,LAXIS-Lh);ctx.closePath();
+  ctx.fillStyle='rgba(59,130,246,.14)';ctx.fill();
+  ctx.strokeStyle='#1d4ed8';ctx.lineWidth=2;ctx.stroke();
+  arrowHead(LX,LAXIS-Lh-2,-Math.PI/2,9,'#1d4ed8');
+  arrowHead(LX,LAXIS+Lh+2,Math.PI/2,9,'#1d4ed8');
+  ctx.restore();
+  dot(LX,LAXIS,3,'#1d4ed8');txt('O',LX+2,LAXIS+18,'#1d4ed8',12);
+
+  // F、2F
+  [[-f,'F'],[f,'F'+String.fromCharCode(8242)],[-2*f,'2F'],[2*f,'2F'+String.fromCharCode(8242)]].forEach(function(p){
+    var px=LX+p[0]*scale;
+    if(px>10&&px<W-10){dot(px,LAXIS,3.5,'#0f172a');txt(p[1],px,LAXIS+22,'#0f172a',12);}
+  });
+
+  // F' 参考线：让"像贴近焦点"一眼可见
+  var fxp=LX+f*scale;
+  if(S.fguide&&fxp>10&&fxp<W-10){
+    ctx.save();ctx.strokeStyle='#cbd5e1';ctx.lineWidth=1.4;ctx.setLineDash([4,5]);
+    ctx.beginPath();ctx.moveTo(fxp,LAXIS-Lh-14);ctx.lineTo(fxp,LAXIS+Lh+14);ctx.stroke();ctx.setLineDash([]);ctx.restore();
+    txt('F'+String.fromCharCode(8242)+' 基准',fxp,LAXIS-Lh-20,'#94a3b8',10);
+  }
+
+  // 对比快照（先画，作为背景）
+  drawGhost();
+
+  // ====== 物体AB ======
+  var Ay_ph=h+objYOff,By_ph=objYOff;
+  var ox=LX-u*scale;
+  var onScreen=ox>12;
+  var oxDraw=onScreen?ox:12;
+  var ay=Yo(Ay_ph),by=Yo(By_ph);
+  var ep=entry(ox,ay,LX,LAXIS);          // 过光心线的真实入射起点
+  var epy=ep[1];
+
+  ray(oxDraw,by,oxDraw,ay,{color:'#0f766e',width:3,mid:false});
+  arrowHead(oxDraw,ay,-Math.PI/2,11,'#0f766e');
+  dot(oxDraw,by,3,'#0f766e');
+  if(!onScreen){
+    ctx.save();ctx.strokeStyle='#0f766e';ctx.lineWidth=2;ctx.setLineDash([5,4]);
+    ctx.beginPath();ctx.moveTo(oxDraw,ay);ctx.lineTo(0,ay);ctx.moveTo(oxDraw,by);ctx.lineTo(0,by);ctx.stroke();ctx.setLineDash([]);ctx.restore();
+    arrowHead(oxDraw+16,ay,-Math.PI,9,'#0f766e');
+    txt('AB（在画面外）',oxDraw+22,ay-10,'#0f766e',12,'left');
+  }else{
+    txt('A',oxDraw-14,ay-4,'#0f766e',14);txt('B',oxDraw-14,by+18,'#0f766e',14);
+  }
+
+  var Boff=Math.abs(relB);
+  var ixScr=parallel?Infinity:LX+v*scale;
+
+  // ====== A点光线（蓝）======
+  if(!hiddenRays['A-par']){
+    ray(0,ay,LX,ay,{color:'#2563eb',width:2,t:0.5});
+    var dx=f*scale,dy=LAXIS-ay;
+    var tExt=(dx>0)?(W-10-LX)/dx:(dx<0?(10-LX)/dx:1000);
+    ray(LX,ay,LX+dx*tExt,ay+dy*tExt,{color:'#2563eb',width:2,t:0.45});
+    if(v<0&&!parallel) ray(LX,ay,ixScr,Yi2(yA2),{color:'#94a3b8',width:1.8,dash:[7,5],mid:false});
+  }
+  if(!hiddenRays['A-cen']){
+    ray(ep[0],epy,LX,LAXIS,{color:'#2563eb',width:2,t:0.5});
+    var k=(LAXIS-epy)/(LX-ep[0]),xe=W-10;
+    ray(LX,LAXIS,xe,LAXIS+k*(xe-LX),{color:'#2563eb',width:2,t:0.45});
+    if(v<0&&!parallel) ray(LX,LAXIS,ixScr,Yi2(yA2),{color:'#94a3b8',width:1.8,dash:[7,5],mid:false});
+  }
+
+  // ====== B点光线（紫）======
+  if(Boff>0.05){
+    if(!hiddenRays['B-par']){
+      ray(0,by,LX,by,{color:'#7c3aed',width:2,t:0.5});
+      var dx2=f*scale,dy2=LAXIS-by;
+      var t2=(dx2>0)?(W-10-LX)/dx2:(dx2<0?(10-LX)/dx2:1000);
+      ray(LX,by,LX+dx2*t2,by+dy2*t2,{color:'#7c3aed',width:2,t:0.45});
+      if(v<0&&!parallel) ray(LX,by,ixScr,Yi2(yB2),{color:'#94a3b8',width:1.8,dash:[7,5],mid:false});
+    }
+    if(!hiddenRays['B-cen']){
+      var epb=entry(ox,by,LX,LAXIS);
+      ray(epb[0],epb[1],LX,LAXIS,{color:'#7c3aed',width:2,t:0.5});
+      var kb=(LAXIS-epb[1])/(LX-epb[0]),xeb=W-10;
+      ray(LX,LAXIS,xeb,LAXIS+kb*(xeb-LX),{color:'#7c3aed',width:2,t:0.45});
+      if(v<0&&!parallel) ray(LX,LAXIS,ixScr,Yi2(yB2),{color:'#94a3b8',width:1.8,dash:[7,5],mid:false});
+    }
+  }
+
+  // ====== 像 ======
+  var offScreen=false;
+  if(!parallel){
+    var iy=Yi2(yA2),iyB=Yi2(yB2);
+    offScreen=(v>0&&ixScr>W-8)||(v<0&&ixScr<8)||Math.min(iy,iyB)<-6||Math.max(iy,iyB)>H+6;
+    if(!offScreen){
+      // 像的端点是 A' 与 B'：B 不在主光轴上时 B' 同样不在轴上（B' 端点取物体 B 的像）
+      var lw=v<0?2.4:2.6,dsh=v<0?[7,5]:null;
+      ray(ixScr,iyB,ixScr,iy,{color:'#dc2626',width:lw,dash:dsh,mid:false});
+      arrowHead(ixScr,iy,Math.atan2(iy-iyB,0),11,'#dc2626');
+      // 只在 A' 端画箭头，B' 端只画端点，避免双箭头
+      dot(ixScr,iyB,3.5,'#dc2626');
+      if(ixScr>14&&ixScr<W-14){
+        txt('A'+String.fromCharCode(8242),ixScr+16,iy+(iy<iyB?-4:16),'#dc2626',14);
+        txt('B'+String.fromCharCode(8242),ixScr+16,iyB+(iy<iyB?16:-4),'#dc2626',13);
+      }
+    }
+    // 像到 F' 的间距标注
+    if(S.fguide&&v>0&&!offScreen&&fxp>10&&fxp<W-10){
+      var yg=LAXIS-Math.min(Lh*0.72,Math.abs(iy-LAXIS))-14;
+      if(Math.abs(ixScr-fxp)>3){
+        ctx.save();ctx.strokeStyle='#0f766e';ctx.lineWidth=1;
+        ctx.beginPath();ctx.moveTo(fxp,yg);ctx.lineTo(ixScr,yg);ctx.stroke();
+        ctx.beginPath();ctx.moveTo(fxp,yg-3);ctx.lineTo(fxp,yg+3);ctx.stroke();
+        ctx.beginPath();ctx.moveTo(ixScr,yg-3);ctx.lineTo(ixScr,yg+3);ctx.stroke();ctx.restore();
+        txt((v-f).toFixed(2)+'cm',(fxp+ixScr)/2,yg-5,'#0f766e',10);
+      }else txt('像已在 F'+String.fromCharCode(8242)+' 上',(fxp+ixScr)/2,yg-5,'#0f766e',10);
+    }
+  }
+
+  // 提示文字
+  if(parallel) txt('物体位于焦点：折射光线互相平行，不成像',W/2,34,'#b91c1c',14);
+  else if(offScreen) txt('物体非常接近焦点：像距极大，像成在画面之外',W/2,34,'#b91c1c',14);
+  else if(u>=20*f) txt('u = '+u.toFixed(0)+' cm（'+(u/f).toFixed(0)+'f）：v = '+(v/f).toFixed(4)+'f，像与 F'+String.fromCharCode(8242)+' 只差 '+(v-f).toFixed(2)+' cm',W/2,34,'#1d4ed8',13);
+  else if(u>=8*f) txt('u = '+u.toFixed(0)+' cm（'+(u/f).toFixed(1)+'f）：入射光近似平行，像几乎落在 F'+String.fromCharCode(8242)+' 上',W/2,34,'#1d4ed8',13);
+  else if(!onScreen) txt('物体在画面外（u = '+u.toFixed(0)+' cm），入射光线仍按真实方向射入',W/2,34,'#0f766e',13);
+  if(S.lensX&&drag==='lens'&&u<=S.f*1.001) txt('透镜已左移到与物体相距 f（u = f，折射光平行不成像）',W/2,54,'#b91c1c',13);
+
+  // 尺寸标注
+  if(S.mark){
+    var yb=LAXIS+34;
+    ctx.save();ctx.strokeStyle='#94a3b8';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(oxDraw,yb);ctx.lineTo(LX,yb);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(oxDraw,yb-4);ctx.lineTo(oxDraw,yb+4);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(LX,yb-4);ctx.lineTo(LX,yb+4);ctx.stroke();ctx.restore();
+    txt('u = '+u.toFixed(1)+' cm（'+(u/f).toFixed(2)+'f）',(oxDraw+LX)/2,yb+14,'#475569',11);
+    if(!parallel&&isFinite(v)&&!offScreen){
+      var x2=clamp(ixScr,12,W-12);
+      ctx.save();ctx.strokeStyle='#dc2626';ctx.lineWidth=1;
+      ctx.beginPath();ctx.moveTo(LX,yb+22);ctx.lineTo(x2,yb+22);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(LX,yb+18);ctx.lineTo(LX,yb+26);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(x2,yb+18);ctx.lineTo(x2,yb+26);ctx.stroke();ctx.restore();
+      txt('v = '+v.toFixed(2)+' cm（'+(v/f).toFixed(3)+'f）',(LX+x2)/2,yb+36,'#dc2626',11);
+    }
+  }
+
+  if(S.zoom&&!parallel&&v>0) drawInset(v,yA2,yB2,relA,relB);
+
+  updatePanel(parallel,v);
+  updateRayBtns();
+  updateGhostPanel();
+}
+
+/* ---------- 焦点附近局部放大窗 ---------- */
+function drawInset(v,yA2,yB2,relA,relB){
+  var f=S.f,h=relA,hB=relB;
+  if(yB2===undefined)yB2=0;
+  var iw=224,ih=132,ix0=W-iw-10,iy0=10;
+  var x1=0.8*f,x2=Math.max(1.6*f,Math.min(v*1.25,2.3*f));
+  var yTop=Math.max(0.08*f,h,hB,yA2,yB2)+0.05*f;
+  var yBot=Math.min(-0.08*f,yA2-0.05*f,yB2-0.05*f);
+  var si=Math.min((iw-26)/(x2-x1),(ih-34)/(yTop-yBot));
+  var ox=ix0+16-x1*si,oy=iy0+16+yTop*si;
+  function Xi(x){return ox+x*si;}
+  function Yi(y){return oy-y*si;}
+
+  ctx.save();
+  ctx.fillStyle='#fbfcff';ctx.strokeStyle='#cbd5e1';ctx.lineWidth=1;
+  ctx.fillRect(ix0,iy0,iw,ih);ctx.strokeRect(ix0,iy0,iw,ih);
+  ctx.beginPath();ctx.rect(ix0+1,iy0+1,iw-2,ih-2);ctx.clip();
+
+  ctx.save();ctx.strokeStyle='#334155';ctx.lineWidth=1.2;ctx.setLineDash([10,4,2,4]);
+  ctx.beginPath();ctx.moveTo(ix0,Yi(0));ctx.lineTo(ix0+iw,Yi(0));ctx.stroke();ctx.setLineDash([]);ctx.restore();
+  dot(Xi(f),Yi(0),3,'#0f172a');txt('F'+String.fromCharCode(8242),Xi(f),Yi(0)-6,'#0f172a',11);
+  if(x2>2*f){dot(Xi(2*f),Yi(0),3,'#0f172a');txt('2F'+String.fromCharCode(8242),Xi(2*f),Yi(0)-6,'#0f172a',11);}
+  var xe=x2;
+  ctx.strokeStyle='#2563eb';ctx.lineWidth=1.8;
+  ctx.beginPath();ctx.moveTo(Xi(0),Yi(h));ctx.lineTo(Xi(xe),Yi(h-(h/S.f)*xe));ctx.stroke();
+  ctx.beginPath();ctx.moveTo(Xi(0),Yi(0));ctx.lineTo(Xi(xe),Yi(-h*xe/S.u));ctx.stroke();
+  if(Math.abs(hB)>0.05*f){ctx.strokeStyle='#7c3aed';ctx.beginPath();ctx.moveTo(Xi(0),Yi(hB));ctx.lineTo(Xi(xe),Yi(hB-(hB/S.f)*xe));ctx.stroke();}
+  var ix=Xi(v),iy=Yi(yA2),iyB=Yi(yB2);
+  dot(ix,iy,4,'#dc2626');
+  ctx.strokeStyle='#dc2626';ctx.lineWidth=2.4;
+  ctx.beginPath();ctx.moveTo(ix,iyB);ctx.lineTo(ix,iy);ctx.stroke();
+  arrowHead(ix,iy,Math.atan2(iy-iyB,0),10,'#dc2626');
+  if(Math.abs(yB2)>0.05*f){dot(ix,iyB,3,'#dc2626');txt('B'+String.fromCharCode(8242),ix+11,iyB+(iy<iyB?12:-2),'#dc2626',11);}
+  txt('A'+String.fromCharCode(8242),ix+12,iy+(yA2>0?-2:14),'#dc2626',12);
+  var yb=Yi(0)+26;
+  ctx.save();ctx.strokeStyle='#1d4ed8';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(Xi(f),yb);ctx.lineTo(ix,yb);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(Xi(f),yb-3);ctx.lineTo(Xi(f),yb+3);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(ix,yb-3);ctx.lineTo(ix,yb+3);ctx.stroke();ctx.restore();
+  txt((String.fromCharCode(916))+' = '+(v-S.f).toFixed(2)+' cm',(Xi(S.f)+ix)/2,yb+12,'#1d4ed8',10);
+  ctx.restore();
+
+  ctx.fillStyle='#64748b';ctx.font='11px sans-serif';ctx.textAlign='left';
+  ctx.fillText('焦点附近放大（独立比例）',ix0+8,iy0+ih-6);
+}
+
+/* ---------- 数据面板 ---------- */
+function updatePanel(parallel,v){
+  var f=S.f,u=S.u,h=S.h;
+  $('oU').textContent=u.toFixed(2)+' cm（'+(u/f).toFixed(2)+'f，透镜左侧）';
+  var nature='—',cs='rC';
+  if(parallel){
+    $('oV').textContent='不成像（折射光平行射出）';$('oR').textContent='—';$('oD').textContent='—';
+    $('oM').textContent='—';$('oH').textContent='—';
+    nature='u = f：折射光线互相平行，不能成像';cs='rD';
+  }else{
+    var m=Math.abs(v)/u,d=v-f;
+    $('oV').textContent=(v>0?'v = '+v.toFixed(2)+' cm（异侧）':'|v| = '+Math.abs(v).toFixed(2)+' cm（同侧）');
+    $('oR').textContent=(v/f).toFixed(4);
+    $('oD').textContent=v>0?((String.fromCharCode(916))+' = '+d.toFixed(2)+' cm（'+(d/f*100).toFixed(2)+'% f）'):'虚像，不适用';
+    $('oM').textContent=m.toFixed(3)+(m>1.02?'（放大）':m<0.98?'（缩小）':'（等大）');
+    $('oH').textContent=(h*m).toFixed(2)+' cm';
+    var sz=m>1.02?'放大':m<0.98?'缩小':'等大';
+    nature=(v>0?'倒立、':'正立、')+sz+'、'+(v>0?'实像':'虚像');
+    if(Math.abs(u-2*f)<=0.02*f)cs='rB';
+    else if(u>f)cs=(u>2*f?(u>=8*f?'rF':'rC'):'rA');
+    else cs='rE';
+  }
+  $('oNature').textContent='像的性质：'+nature;
+  $('oCase').textContent={rA:'f<u<2f',rB:'u=2f',rC:'u>2f',rF:'u≥8f',rD:'u=f',rE:'u<f'}[cs];
+  ['rA','rB','rC','rD','rE','rF'].forEach(function(r){$(r).classList.toggle('cur',r===cs);});
+  var n=$('oNote');
+  if(!parallel&&v>0&&u>=3*f){
+    n.style.display='block';
+    n.innerHTML='u = '+(u/f).toFixed(1)+'f 时 v = '+(v/f).toFixed(4)+'f，像距只比焦距大 '+(v-f).toFixed(2)+' cm。u 越大，'+(String.fromCharCode(916))+' = f²/(u−f) 越小，像<b>越来越贴近 F′，但始终在 F′ 之外</b>。可点 20f/30f/50f 按钮继续验证。';
+  }else n.style.display='none';
+}
+
+/* ---------- 对比面板 ---------- */
+function updateGhostPanel(){
+  var el=$('oGhost');
+  if(!S.ghost||!ghost){el.style.display='none';return;}
+  var g=ghost,f=g.f,u=g.u;
+  var line;
+  if(Math.abs(u-f)<1e-3) line='原位置 u = f，不成像。';
+  else{
+    var v=u*f/(u-f);
+    line='原位置：u = '+u.toFixed(2)+' cm，v = '+v.toFixed(2)+' cm（'+(v/f).toFixed(4)+'f）。当前：u = '+S.u.toFixed(2)+' cm，v = '+(Math.abs(S.u-f)<1e-3?'不成像':(S.u*f/(S.u-f)).toFixed(2)+' cm');
+  }
+  el.style.display='block';
+  el.innerHTML='<b>对比已开启</b>（橙色虚线 = 原像，灰色虚线 = 原透镜/主轴）。'+line+'<br>点"记录当前状态"可把此刻设为新的对比基准；点"清除对比"移除。';
+}
+
+/* ---------- 光线按钮 ---------- */
+function updateRayBtns(){
+  var bar=document.getElementById('rayBtns');
+  var items=[['A-par','A·平行主轴 (蓝)'],['A-cen','A·过光心 (蓝)']];
+  if(Math.abs(objYOff+lensYOff)>0.05){items.push(['B-par','B·平行主轴 (紫)']);items.push(['B-cen','B·过光心 (紫)']);}
+  bar.innerHTML=items.map(function(it){
+    var id=it[0],n=it[1];
+    return '<button class="raybtn '+(hiddenRays[id]?'off':'on')+'" data-id="'+id+'">'+(hiddenRays[id]?String.fromCharCode(10007)+' ':String.fromCharCode(10003)+' ')+n+'</button>';
+  }).join('');
+  bar.querySelectorAll('.raybtn').forEach(function(b){
+    b.onclick=function(){var id=b.dataset.id;if(hiddenRays[id])delete hiddenRays[id];else hiddenRays[id]=1;draw();};
+  });
+}
+
+/* ---------- 控件 ---------- */
+function sync(){
+  fRange.value=S.f;fNum.value=S.f;
+  uRange.value=S.u;uNum.value=S.u<20?S.u.toFixed(2):S.u.toFixed(1);
+  hRange.value=S.h;hVal.textContent=S.h.toFixed(1);
+}
+fRange.oninput=fNum.onchange=function(){S.f=clamp(parseFloat(fNum.value)||10,5,25);resize();clampObjToLens();sync();draw();};
+uRange.oninput=uNum.onchange=function(){S.u=clamp(parseFloat(uNum.value)||1,uMin,uMax);sync();draw();};
+hRange.oninput=function(){S.h=parseFloat(hRange.value);clampObjToLens();sync();draw();};
+chkFree.onchange=function(){S.free=chkFree.checked;if(!S.free)objYOff=0;draw();};
+chkLensX.onchange=function(){S.lensX=chkLensX.checked;if(!S.lensX)lensXOff=0;clampObjToLens();draw();};
+chkLensY.onchange=function(){S.lensY=chkLensY.checked;if(!S.lensY)lensYOff=0;clampObjToLens();draw();};
+chkGhost.onchange=function(){S.ghost=chkGhost.checked;if(!S.ghost)ghost=null;draw();};
+$('btnGhostNow').onclick=function(){if(!S.ghost){chkGhost.checked=true;S.ghost=true;}ghost=capture();draw();};
+$('btnClearGhost').onclick=function(){ghost=null;draw();};
+
+function stepU(dir){var s=Math.max(0.1,uMin*0.3,S.u*0.05);S.u=clamp(S.u+dir*s,uMin,uMax);}
+$('btnNear').onclick=function(){stepU(-1);sync();draw();};
+$('btnFar').onclick=function(){stepU(1);sync();draw();};
+$('btnReset').onclick=function(){
+  S.f=10;S.u=25;S.h=5;lensXOff=0;lensYOff=0;objYOff=0;hiddenRays={};ghost=null;
+  S.free=false;S.lensX=false;S.lensY=false;
+  chkFree.checked=false;chkLensX.checked=false;chkLensY.checked=false;
+  resize();sync();draw();
+};
+$('btnGrid').onclick=function(e){S.grid=!S.grid;e.target.classList.toggle('on',S.grid);draw();};
+$('btnMark').onclick=function(e){S.mark=!S.mark;e.target.classList.toggle('on',S.mark);draw();};
+$('btnZoom').onclick=function(e){S.zoom=!S.zoom;e.target.classList.toggle('on',S.zoom);draw();};
+$('btnF').onclick=function(e){S.fguide=!S.fguide;e.target.classList.toggle('on',S.fguide);draw();};
+document.querySelectorAll('[data-k]').forEach(function(b){b.onclick=function(){
+  var k=parseFloat(b.dataset.k);S.u=k===1?S.f:clamp(k*S.f,uMin,uMax);sync();draw();
+};});
+
+var anim=null,animDir=1;
+$('btnAnim').onclick=function(e){
+  if(anim){cancelAnimationFrame(anim);anim=null;e.target.textContent='自动演示';return;}
+  e.target.textContent='暂停';
+  var step=function(){S.u+=animDir*Math.max(0.05,uMin*0.3);
+    if(S.u>=uMax){S.u=uMax;animDir=-1;}if(S.u<=uMin){S.u=uMin;animDir=1;}
+    sync();draw();anim=requestAnimationFrame(step);};
+  anim=requestAnimationFrame(step);
+};
+
+/* ---------- 物体钳制在透镜口径内 ---------- */
+function clampObjToLens(){
+  var Lh=Math.min(H*0.34,140),LhOverS=Lh/scale;
+  var yMin=-lensYOff-LhOverS;
+  var yMax=-lensYOff+LhOverS-S.h;
+  objYOff=clamp(objYOff,yMin,yMax);
+}
+
+/* ---------- 拖动 ---------- */
+var drag=null,dragOffY=0;
+function pos(e){var r=cv.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top};}
+function onObj(p){
+  var ox=(cx+lensXOff)-S.u*scale;
+  var ay=Yo(S.h+objYOff),by=Yo(objYOff);
+  if(ox>12) return Math.abs(p.x-ox)<26&&p.y>Math.min(ay,by)-22&&p.y<Math.max(ay,by)+22;
+  return Math.abs(p.y-(ay+by)/2)<Math.max(22,(ay-by)/2+10)&&p.x<60;
+}
+function onLens(p){
+  if(!S.lensX&&!S.lensY) return false;
+  var Lh=Math.min(H*0.34,140);
+  return Math.abs(p.x-(cx+lensXOff))<34&&Math.abs(p.y-(cy+lensYOff*scale))<Lh;
+}
+
+cv.addEventListener('pointerdown',function(e){
+  var p=pos(e);
+  if(onObj(p)){drag='obj';dragOffY=objYOff-(cy-p.y)/scale;cv.setPointerCapture(e.pointerId);}
+  else if(onLens(p)){
+    drag='lens';cv.setPointerCapture(e.pointerId);
+    if(S.ghost&&!ghost) ghost=capture();      // 开始移动即记录对比基准
+  }
+});
+cv.addEventListener('pointermove',function(e){
+  var p=pos(e);
+  if(drag==='obj'){
+    var Lh=Math.min(H*0.34,140),LhOverS=Lh/scale;
+    var yMin=-lensYOff-LhOverS,yMax=-lensYOff+LhOverS-S.h;
+    S.u=clamp((cx+lensXOff-p.x)/scale,uMin,uMax);
+    if(S.free) objYOff=clamp(dragOffY+(cy-p.y)/scale,yMin,yMax);
+    sync();draw();
+  }else if(drag==='lens'){
+    if(S.lensX){
+      // 物体 AB 画面位置恒定：ox = cx+lensXOff - u*scale 不变，透镜左右平移只改变物距 u
+      var oxNow=cx+lensXOff-S.u*scale;
+      // 左移下限：物距 u 不小于 f（透镜最左 = 与物体相距 f），且不冲出画面左缘
+      var leftB=Math.max(18,oxNow+S.f*scale);
+      // 右移上限：保持"范围不广"（相对默认位 +LENS_X_LIMIT），且至少能回到当前位
+      var rightB=Math.min(W-18,Math.max(cx+LENS_X_LIMIT,cx+lensXOff));
+      if(rightB<leftB) rightB=leftB;
+      var newLX=clamp(p.x,leftB,rightB);
+      S.u=clamp((newLX-oxNow)/scale,S.f,uMax);
+      lensXOff=newLX-cx;
+    }
+    if(S.lensY){
+      lensYOff=clamp((p.y-cy)/scale,-LENS_Y_LIMIT/scale,LENS_Y_LIMIT/scale);
+    }
+    clampObjToLens();sync();draw();
+  }else{
+    cv.style.cursor=(onObj(p)||onLens(p))?'grab':'default';
+  }
+});
+['pointerup','pointercancel'].forEach(function(t){cv.addEventListener(t,function(){drag=null;});});
+
+window.addEventListener('keydown',function(e){
+  if(e.key==='ArrowLeft'){stepU(-1);sync();draw();e.preventDefault();}
+  if(e.key==='ArrowRight'){stepU(1);sync();draw();e.preventDefault();}
+  if(e.key==='ArrowUp'){S.f=clamp(S.f+0.5,5,25);resize();clampObjToLens();sync();draw();e.preventDefault();}
+  if(e.key==='ArrowDown'){S.f=clamp(S.f-0.5,5,25);resize();clampObjToLens();sync();draw();e.preventDefault();}
+});
+window.addEventListener('resize',function(){resize();clampObjToLens();draw();});
+
+resize();sync();draw();
+})();
+</script>
+</body>
+</html>
